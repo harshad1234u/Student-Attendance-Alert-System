@@ -33,8 +33,9 @@ def init_firebase():
     because @st.cache_resource forbids UI calls inside cached functions.
     """
     try:
-        firebase_json_str = st.secrets["FIREBASE_KEY"]
-        firebase_dict = json.loads(firebase_json_str)
+        # Read Firebase config as a native TOML section — no JSON parsing needed,
+        # so \n in the private key is never corrupted.
+        firebase_dict = dict(st.secrets["firebase"])
 
         if not firebase_admin._apps:
             cred = credentials.Certificate(firebase_dict)
@@ -42,7 +43,7 @@ def init_firebase():
 
         return firestore.client(), None          # (client, no error)
     except KeyError:
-        return None, None                        # Secret simply not set — skip silently
+        return None, None                        # Secret section not set — skip silently
     except Exception as e:
         return None, str(e)                      # Return error string, NOT st.toast()
 
